@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>فێڵباز | یاری ئۆنڵاین</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+:root {
+  --bg: #070b18;
+  --glass: rgba(255,255,255,0.05);
+  --glass-border: rgba(255,255,255,0.12);
+  --glass-hover: rgba(255,255,255,0.09);
+  --card: rgba(255,255,255,0.06);
+  --accent: #ff4d6d;
+  --accent2: #ffc93c;
+  --blue: #4fc3f7;
+  --green: #43e97b;
+  --purple: #a855f7;
+  --text: #f0f4ff;
+  --muted: rgba(240,244,255,0.45);
+  --shadow: rgba(0,0,0,0.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow-x:hidden}
+body{
+  font-family:'Noto Naskh Arabic',serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  position:relative;
+}
+
+/* Animated mesh background */
+.bg-mesh{
+  position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(255,77,109,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 80% 90%, rgba(79,195,247,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 50%, rgba(168,85,247,0.1) 0%, transparent 70%);
+  animation: meshMove 15s ease-in-out infinite alternate;
+}
+@keyframes meshMove{
+  0%{background-position:0% 0%,100% 100%,50% 50%}
+  100%{background-position:10% 5%,90% 95%,55% 45%}
+}
+
+/* Stars */
+.stars{position:fixed;inset:0;z-index:0;overflow:hidden}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--d,3s) var(--delay,0s) ease-in-out infinite alternate}
+@keyframes twinkle{0%{opacity:0.1;transform:scale(1)}100%{opacity:0.8;transform:scale(1.3)}}
+
+/* Screens */
+.screen{display:none;position:relative;z-index:1;min-height:100vh;padding:1.5rem}
+.screen.active{display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+.screen.centered{justify-content:center}
+
+/* Glass card */
+.glass{
+  background:var(--glass);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid var(--glass-border);
+  border-radius:24px;
+  box-shadow:0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.glass-sm{
+  background:var(--glass);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border:1px solid var(--glass-border);
+  border-radius:16px;
+}
+
+/* ═══════════════ LANDING ═══════════════ */
+#landingScreen{gap:1.5rem;padding-top:3rem;padding-bottom:3rem}
+
+.logo-wrap{text-align:center;margin-bottom:0.5rem}
+.logo-emoji{
+  font-size:4.5rem;
+  display:block;
+  filter:drop-shadow(0 0 30px rgba(255,77,109,0.6));
+  animation:float 3s ease-in-out infinite;
+}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-14px) rotate(4deg)}}
+.logo-title{
+  font-size:clamp(2.8rem,12vw,5rem);
+  font-weight:900;
+  background:linear-gradient(135deg, #fff 0%, var(--accent2) 45%, var(--accent) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1;letter-spacing:-0.02em;
+}
+.logo-sub{color:var(--muted);font-size:0.95rem;margin-top:0.4rem;line-height:1.6;max-width:320px;text-align:center}
+
+.landing-btns{display:flex;flex-direction:column;gap:0.8rem;width:100%;max-width:380px}
+
+.btn-create{
+  width:100%;padding:1.1rem 1.5rem;
+  border-radius:18px;border:none;
+  background:linear-gradient(135deg,var(--accent),#c9114d);
+  color:#fff;font-family:'Noto Naskh Arabic',serif;
+  font-size:1.15rem;font-weight:700;cursor:pointer;
+  box-shadow:0 6px 30px rgba(255,77,109,0.4), 0 0 0 0 rgba(255,77,109,0.4);
+  transition:transform 0.15s,box-shadow 0.3s;
+  display:flex;align-items:center;justify-content:center;gap:0.5rem;
+}
+.btn-create:hover{transform:scale(0.98);box-shadow:0 4px 20px rgba(255,77,109,0.5)}
+.btn-create:active{transform:scale(0.96)}
+
+.btn-join{
+  width:100%;padding:1rem 1.5rem;
+  border-radius:18px;
+  background:var(--glass);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1.5px solid var(--glass-border);
+  color:var(--text);font-family:'Noto Naskh Arabic',serif;
+  font-size:1.05rem;font-weight:600;cursor:pointer;
+  transition:all 0.2s;
+  display:flex;align-items:center;justify-content:center;gap:0.5rem;
+}
+.btn-join:hover{background:var(--glass-hover);border-color:var(--blue)}
+
+/* Join form */
+.join-form{width:100%;max-width:380px;display:flex;flex-direction:column;gap:0.7rem}
+.input-wrap{position:relative}
+.glass-input{
+  width:100%;padding:0.85rem 1.1rem;
+  background:rgba(255,255,255,0.07);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1.5px solid var(--glass-border);
+  border-radius:14px;color:var(--text);
+  font-family:'Noto Naskh Arabic',serif;font-size:1rem;
+  outline:none;transition:border-color 0.2s,background 0.2s;
+  text-align:right;letter-spacing:0.05em;
+}
+.glass-input:focus{border-color:var(--blue);background:rgba(79,195,247,0.08)}
+.glass-input::placeholder{color:var(--muted)}
+.glass-input.code-input{
+  text-transform:uppercase;text-align:center;
+  font-size:1.6rem;font-weight:700;letter-spacing:0.25em;
+}
+
+.join-section{display:none;width:100%;max-width:380px;flex-direction:column;gap:0.7rem;animation:slideUp 0.3s ease}
+.join-section.open{display:flex}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.divider{display:flex;align-items:center;gap:0.8rem;color:var(--muted);font-size:0.8rem;width:100%;max-width:380px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--glass-border)}
+
+/* ═══════════════ LOBBY ═══════════════ */
+#lobbyScreen{gap:1.2rem;padding-top:2rem;padding-bottom:3rem}
+
+.room-header{
+  width:100%;max-width:480px;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  flex-wrap:wrap;
+}
+.room-code-badge{
+  background:linear-gradient(135deg,rgba(255,77,109,0.2),rgba(255,201,60,0.15));
+  border:1.5px solid rgba(255,201,60,0.4);
+  border-radius:16px;padding:0.7rem 1.2rem;
+  display:flex;align-items:center;gap:0.8rem;cursor:pointer;
+  transition:all 0.2s;
+}
+.room-code-badge:hover{border-color:var(--accent2);background:rgba(255,201,60,0.15)}
+.code-label{font-size:0.72rem;color:var(--muted);line-height:1}
+.code-value{font-size:1.5rem;font-weight:900;letter-spacing:0.18em;color:var(--accent2)}
+.copy-hint{font-size:0.7rem;color:var(--muted);opacity:0.7}
+
+.host-badge{
+  display:inline-flex;align-items:center;gap:0.4rem;
+  background:rgba(255,77,109,0.15);border:1px solid rgba(255,77,109,0.3);
+  border-radius:999px;padding:0.3rem 0.9rem;
+  font-size:0.8rem;color:var(--accent);
+}
+.member-badge{
+  display:inline-flex;align-items:center;gap:0.4rem;
+  background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);
+  border-radius:999px;padding:0.3rem 0.9rem;
+  font-size:0.8rem;color:var(--blue);
+}
+
+.section-title{font-size:0.72rem;color:var(--muted);letter-spacing:0.1em;margin-bottom:0.6rem}
+
+/* Players list in lobby */
+.lobby-players{
+  width:100%;max-width:480px;
+  display:flex;flex-direction:column;gap:0.5rem;
+}
+.lobby-player{
+  display:flex;align-items:center;gap:0.8rem;
+  padding:0.7rem 1rem;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--glass-border);
+  border-radius:14px;
+  transition:all 0.2s;
+  animation:slideIn 0.25s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
+.lobby-player.host-player{border-color:rgba(255,77,109,0.3);background:rgba(255,77,109,0.07)}
+.lp-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;border:2px solid rgba(255,255,255,0.1)}
+.lp-name{font-weight:600;font-size:0.95rem;flex:1}
+.lp-host-tag{font-size:0.7rem;color:var(--accent);background:rgba(255,77,109,0.15);padding:0.15rem 0.6rem;border-radius:999px}
+.lp-you-tag{font-size:0.7rem;color:var(--blue);background:rgba(79,195,247,0.12);padding:0.15rem 0.6rem;border-radius:999px}
+.waiting-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--green);
+  animation:pulse-g 1.5s ease-in-out infinite;
+}
+@keyframes pulse-g{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(67,233,123,0.5)}50%{opacity:0.6;box-shadow:0 0 0 4px transparent}}
+
+/* Settings panel (host only) */
+.settings-panel{width:100%;max-width:480px}
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem}
+.cat-btn{
+  background:rgba(255,255,255,0.04);border:1.5px solid var(--glass-border);
+  border-radius:12px;padding:0.6rem 0.3rem;text-align:center;
+  cursor:pointer;transition:all 0.2s;position:relative;font-family:'Noto Naskh Arabic',serif;
+}
+.cat-btn:hover{background:rgba(255,201,60,0.1);border-color:rgba(255,201,60,0.4)}
+.cat-btn.on{background:rgba(255,201,60,0.12);border-color:rgba(255,201,60,0.5)}
+.cat-btn .ce{font-size:1.3rem;display:block;margin-bottom:0.2rem}
+.cat-btn .cn{font-size:0.62rem;color:var(--muted);line-height:1.2}
+.cat-btn.on .cn{color:var(--accent2)}
+.cat-check-mark{position:absolute;top:3px;right:4px;font-size:0.55rem;color:var(--accent2);opacity:0;transition:opacity 0.2s}
+.cat-btn.on .cat-check-mark{opacity:1}
+
+.imp-row{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(255,255,255,0.04);border:1.5px solid var(--glass-border);
+  border-radius:14px;padding:0.75rem 1rem;
+}
+.imp-ctrl{display:flex;align-items:center;gap:0.9rem}
+.imp-n{font-size:1.4rem;font-weight:700;color:var(--accent);min-width:28px;text-align:center}
+.imp-btn{
+  width:30px;height:30px;border-radius:50%;
+  background:rgba(255,255,255,0.06);border:1.5px solid var(--glass-border);
+  color:var(--text);cursor:pointer;font-size:1.1rem;
+  display:flex;align-items:center;justify-content:center;transition:all 0.2s;
+}
+.imp-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(255,77,109,0.12)}
+
+/* Start button */
+.btn-start{
+  width:100%;max-width:480px;
+  padding:1.1rem;border-radius:18px;border:none;
+  background:linear-gradient(135deg,#11d460,#0fa84c);
+  color:#fff;font-family:'Noto Naskh Arabic',serif;
+  font-size:1.15rem;font-weight:700;cursor:pointer;
+  box-shadow:0 6px 30px rgba(17,212,96,0.35);
+  transition:transform 0.15s,opacity 0.15s;
+}
+.btn-start:hover{transform:scale(0.98);opacity:0.9}
+.btn-start:disabled{opacity:0.35;cursor:not-allowed;transform:none}
+
+.waiting-msg{
+  color:var(--muted);font-size:0.9rem;text-align:center;
+  display:flex;align-items:center;gap:0.5rem;justify-content:center;
+}
+.dots-anim::after{
+  content:'...';animation:dots 1.5s steps(3,end) infinite;
+}
+@keyframes dots{0%,33%{content:'.'}34%,66%{content:'..'}67%,100%{content:'...'}}
+
+.btn-secondary{
+  padding:0.75rem 1.8rem;border-radius:14px;
+  background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1.5px solid var(--glass-border);
+  color:var(--text);font-family:'Noto Naskh Arabic',serif;
+  font-size:0.95rem;cursor:pointer;transition:all 0.2s;
+}
+.btn-secondary:hover{background:var(--glass-hover);border-color:var(--muted)}
+
+/* ═══════════════ REVEAL ═══════════════ */
+#revealScreen{gap:1.3rem;padding-top:2.5rem;justify-content:flex-start}
+
+.reveal-title{font-size:1.2rem;font-weight:700;text-align:center;line-height:1.4}
+
+/* 3D Card */
+.card-scene{width:100%;max-width:340px;height:240px;perspective:1000px}
+.card-3d{
+  width:100%;height:100%;position:relative;
+  transform-style:preserve-3d;
+  transition:transform 0.7s cubic-bezier(0.4,0,0.2,1);
+  cursor:pointer;
+}
+.card-3d.flipped{transform:rotateY(180deg)}
+.card-face{
+  position:absolute;inset:0;border-radius:24px;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0.6rem;padding:1.4rem;
+}
+.card-front{
+  background:linear-gradient(145deg,rgba(255,255,255,0.08),rgba(79,195,247,0.06));
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1.5px solid rgba(79,195,247,0.3);
+  box-shadow:0 0 40px rgba(79,195,247,0.12),inset 0 1px 0 rgba(255,255,255,0.1);
+  overflow:hidden;
+}
+.card-front-shine{
+  position:absolute;inset:0;border-radius:22px;
+  background:linear-gradient(135deg,rgba(255,255,255,0.07) 0%,transparent 50%,rgba(79,195,247,0.05) 100%);
+  pointer-events:none;
+}
+.card-front-grid{
+  position:absolute;inset:0;border-radius:22px;
+  background-image:linear-gradient(rgba(79,195,247,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(79,195,247,0.05) 1px,transparent 1px);
+  background-size:30px 30px;
+  pointer-events:none;
+}
+.cf-icon{font-size:3.5rem;position:relative;z-index:1;filter:drop-shadow(0 0 15px rgba(79,195,247,0.5))}
+.cf-text{font-size:1rem;color:rgba(79,195,247,0.8);position:relative;z-index:1}
+
+.card-back{
+  transform:rotateY(180deg);
+  background:linear-gradient(145deg,rgba(255,255,255,0.08),rgba(168,85,247,0.06));
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1.5px solid rgba(255,201,60,0.35);
+  box-shadow:0 0 40px rgba(255,201,60,0.1),inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.card-back.imp{
+  border-color:rgba(255,77,109,0.5);
+  background:linear-gradient(145deg,rgba(255,77,109,0.08),rgba(255,77,109,0.04));
+  box-shadow:0 0 50px rgba(255,77,109,0.2),inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.card-back::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  border-radius:24px 24px 0 0;
+  background:linear-gradient(90deg,var(--blue),var(--accent2));
+}
+.card-back.imp::after{background:linear-gradient(90deg,var(--accent),#ff9f9f)}
+
+.cb-player{font-size:0.95rem;font-weight:700;color:var(--accent2)}
+.card-back.imp .cb-player{color:var(--accent)}
+.cb-word{font-size:2.6rem;font-weight:900;line-height:1.2;text-align:center;text-shadow:0 2px 20px rgba(255,255,255,0.1)}
+.cb-mystery{
+  font-size:4rem;font-weight:900;font-style:italic;color:var(--accent);
+  filter:drop-shadow(0 0 20px rgba(255,77,109,0.7));
+  animation:imp-pulse 1.5s ease-in-out infinite;
+}
+@keyframes imp-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.cb-imp-msg{font-size:1.1rem;font-weight:700;color:var(--accent)}
+.cb-imp-hint{font-size:0.72rem;color:var(--muted);text-align:center;line-height:1.6;max-width:220px}
+.role-badge{
+  display:inline-flex;align-items:center;gap:0.3rem;
+  padding:0.25rem 0.9rem;border-radius:999px;font-size:0.8rem;font-weight:600;
+}
+.rb-crew{background:rgba(67,233,123,0.15);border:1px solid rgba(67,233,123,0.4);color:var(--green)}
+.rb-imp{background:rgba(255,77,109,0.15);border:1px solid rgba(255,77,109,0.4);color:var(--accent)}
+.cat-chip{
+  display:inline-flex;padding:0.2rem 0.7rem;border-radius:999px;
+  background:rgba(255,255,255,0.07);border:1px solid var(--glass-border);
+  font-size:0.74rem;color:var(--muted);
+}
+
+.tap-hint{
+  font-size:0.82rem;color:var(--muted);
+  display:flex;align-items:center;gap:0.4rem;justify-content:center;
+  animation:blink 1.5s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:0.4}50%{opacity:1}}
+.tap-hint.hidden{opacity:0;pointer-events:none}
+
+.btn-next{
+  padding:0.85rem 2.5rem;border-radius:14px;
+  background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1.5px solid var(--glass-border);
+  color:var(--text);font-family:'Noto Naskh Arabic',serif;
+  font-size:1rem;cursor:pointer;transition:all 0.2s;
+}
+.btn-next:hover{border-color:var(--blue);color:var(--blue);background:rgba(79,195,247,0.08)}
+.btn-next.hidden{opacity:0;pointer-events:none}
+
+.ready-count{
+  text-align:center;font-size:0.85rem;color:var(--muted);
+  background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);
+  border-radius:12px;padding:0.6rem 1.2rem;
+}
+
+/* Progress dots */
+.prog-dots{display:flex;gap:0.4rem;justify-content:center;flex-wrap:wrap;max-width:300px}
+.pd{width:10px;height:10px;border-radius:50%;background:var(--glass-border);transition:all 0.3s}
+.pd.done{background:var(--green)}
+.pd.cur{background:var(--accent2);animation:pd-pulse 1s ease-in-out infinite}
+@keyframes pd-pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* ═══════════════ VOTE ═══════════════ */
+#voteScreen{gap:1rem;padding-top:2.5rem;padding-bottom:3rem;justify-content:flex-start}
+
+.vote-title{font-size:1.8rem;font-weight:700;text-align:center;background:linear-gradient(135deg,var(--accent2),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.vote-sub{color:var(--muted);font-size:0.88rem;text-align:center}
+
+.vote-list{display:flex;flex-direction:column;gap:0.6rem;width:100%;max-width:460px}
+.vote-card{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0.9rem 1.1rem;
+  background:rgba(255,255,255,0.04);border:1.5px solid var(--glass-border);
+  border-radius:16px;cursor:pointer;transition:all 0.2s;
+}
+.vote-card:hover{background:rgba(255,77,109,0.08);border-color:rgba(255,77,109,0.4);transform:translateX(-3px)}
+.vote-card.my-vote{background:rgba(255,77,109,0.1);border-color:var(--accent);pointer-events:none}
+.vote-card.cannot-vote{opacity:0.6;pointer-events:none;cursor:default}
+.vc-left{display:flex;align-items:center;gap:0.8rem}
+.vc-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:2px solid var(--glass-border)}
+.vc-name{font-size:0.98rem;font-weight:600}
+.vc-you{font-size:0.7rem;color:var(--blue);background:rgba(79,195,247,0.12);padding:0.1rem 0.5rem;border-radius:999px;margin-right:0.4rem}
+.vote-count-badge{
+  background:rgba(255,255,255,0.06);border:1px solid var(--glass-border);
+  border-radius:999px;padding:0.2rem 0.8rem;font-size:0.82rem;color:var(--muted);
+  transition:all 0.3s;
+}
+.vote-count-badge.has-votes{color:var(--accent);border-color:rgba(255,77,109,0.4)}
+
+.vote-status{text-align:center;font-size:0.85rem;color:var(--muted)}
+.vote-status.voted{color:var(--green)}
+
+.btn-reveal{
+  width:100%;max-width:460px;
+  padding:1rem;border-radius:16px;border:none;
+  background:linear-gradient(135deg,var(--accent),#c9114d);
+  color:#fff;font-family:'Noto Naskh Arabic',serif;
+  font-size:1.1rem;font-weight:700;cursor:pointer;
+  box-shadow:0 6px 25px rgba(255,77,109,0.35);
+  transition:transform 0.15s,opacity 0.15s;
+}
+.btn-reveal:hover{transform:scale(0.98);opacity:0.9}
+.btn-reveal:disabled{opacity:0.35;cursor:not-allowed;transform:none}
+
+/* ═══════════════ RESULT ═══════════════ */
+#resultScreen{gap:1.3rem;padding-top:3rem;padding-bottom:3rem;text-align:center}
+
+.result-emoji{font-size:clamp(3.5rem,15vw,6.5rem);animation:pop 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.result-title{font-size:1.8rem;font-weight:700;line-height:1.3}
+.result-sub{color:var(--muted);font-size:0.9rem}
+
+.reveal-cards{
+  width:100%;max-width:420px;
+  display:flex;flex-direction:column;gap:0.55rem;
+}
+.reveal-card{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0.7rem 1rem;
+  background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);
+  border-radius:14px;
+}
+.reveal-card.imp-card{background:rgba(255,77,109,0.07);border-color:rgba(255,77,109,0.25)}
+.rc-left{display:flex;align-items:center;gap:0.7rem}
+.rc-word{font-size:0.75rem;color:var(--muted)}
+.rc-word span{color:var(--accent2)}
+.rc-votes{font-size:0.72rem;color:var(--muted);margin-top:0.1rem}
+
+.result-btns{display:flex;gap:0.8rem;flex-wrap:wrap;justify-content:center}
+.btn-newgame{
+  padding:0.85rem 2rem;border-radius:14px;border:none;
+  background:linear-gradient(135deg,var(--green),#0fa84c);
+  color:#fff;font-family:'Noto Naskh Arabic',serif;
+  font-size:1rem;font-weight:700;cursor:pointer;
+  box-shadow:0 4px 20px rgba(67,233,123,0.3);
+  transition:all 0.2s;
+}
+.btn-newgame:hover{transform:scale(0.97);opacity:0.9}
+.host-only{display:none}
+.is-host .host-only{display:flex}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);
+  background:rgba(20,22,40,0.95);backdrop-filter:blur(20px);
+  border:1px solid var(--glass-border);border-radius:14px;
+  padding:0.8rem 1.4rem;font-size:0.9rem;
+  box-shadow:0 8px 30px rgba(0,0,0,0.4);
+  transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  z-index:200;white-space:nowrap;max-width:90vw;
+  display:flex;align-items:center;gap:0.6rem;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* Canvas */
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:99}
+
+/* Fade in */
+.fade-up{animation:fadeUp 0.4s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* Utility */
+.gap-row{display:flex;gap:0.7rem;align-items:center}
+.w-full{width:100%}
+.max-w{max-width:480px;width:100%}
+</style>
+</head>
+<body>
+
+<canvas id="confetti"></canvas>
+<div class="bg-mesh"></div>
+<div class="stars" id="stars"></div>
+
+<!-- ══════════════════ LANDING ══════════════════ -->
+<div id="landingScreen" class="screen active centered">
+  <div class="logo-wrap fade-up">
+    <span class="logo-emoji">🕵️</span>
+    <div class="logo-title">فێڵباز</div>
+    <div class="logo-sub">یاری فێڵبازی ئۆنڵاین — کارتەکەت دەرببە، ئاشکرا مەبە</div>
+  </div>
+
+  <div class="landing-btns fade-up" style="animation-delay:0.1s">
+    <div class="input-wrap">
+      <input class="glass-input" id="myNameInput" placeholder="ناوی خۆت بنووسە..." maxlength="20">
+    </div>
+    <button class="btn-create" onclick="createRoom()">✦ ژووری نوێ دروست بکە</button>
+  </div>
+
+  <div class="divider fade-up" style="animation-delay:0.15s">یان</div>
+
+  <div class="fade-up" style="animation-delay:0.2s;width:100%;max-width:380px">
+    <button class="btn-join w-full" onclick="toggleJoinForm()">🔗 بچۆرە ژوورێک</button>
+    <div class="join-section" id="joinSection" style="margin-top:0.7rem">
+      <input class="glass-input code-input" id="roomCodeInput" placeholder="XXXXX" maxlength="5" oninput="this.value=this.value.toUpperCase()">
+      <button class="btn-create" onclick="joinRoom()" style="background:linear-gradient(135deg,var(--blue),#2196f3)">دەچمە ژوورەوە ▸</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ LOBBY ══════════════════ -->
+<div id="lobbyScreen" class="screen">
+
+  <div class="room-header max-w fade-up">
+    <div>
+      <div style="font-size:1.3rem;font-weight:700">🎮 چاوەڕوانی...</div>
+      <div id="myRoleBadge" class="host-badge" style="margin-top:0.4rem">👑 تۆ هۆستی</div>
+    </div>
+    <div class="room-code-badge" onclick="copyRoomCode()" title="کۆپی بکە">
+      <div>
+        <div class="code-label">کۆدی ژوور</div>
+        <div class="code-value" id="displayCode">—</div>
+        <div class="copy-hint">📋 کۆپی بکە</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w fade-up" style="animation-delay:0.05s">
+    <div class="section-title">⬤ یاریزانەکان</div>
+    <div class="lobby-players" id="lobbyPlayers"></div>
+  </div>
+
+  <!-- Host settings -->
+  <div id="hostSettings" class="settings-panel glass fade-up" style="padding:1.2rem;animation-delay:0.1s;display:none">
+    <div class="section-title" style="margin-bottom:0.8rem">⬤ ئامادەکاری یاری</div>
+
+    <div class="section-title" style="margin-bottom:0.5rem">کاتێگۆری</div>
+    <div class="cat-grid" id="catGrid" style="margin-bottom:1rem"></div>
+
+    <div class="section-title" style="margin-bottom:0.5rem">ژمارەی فێڵباز</div>
+    <div class="imp-row">
+      <div style="font-size:0.95rem">فێڵباز 🔴</div>
+      <div class="imp-ctrl">
+        <button class="imp-btn" onclick="changeImp(-1)">−</button>
+        <div class="imp-n" id="impCount">١</div>
+        <button class="imp-btn" onclick="changeImp(1)">+</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-start host-only fade-up" id="startBtn" onclick="startGame()" disabled style="animation-delay:0.15s">🎮 دەست پێ بکە</button>
+  <div id="waitingMsg" class="waiting-msg fade-up" style="animation-delay:0.15s;display:none">
+    <span>چاوەڕوانی هۆستی<span class="dots-anim"></span></span>
+  </div>
+  <button class="btn-secondary fade-up" onclick="leaveRoom()" style="animation-delay:0.2s">🚪 دەرچوون</button>
+</div>
+
+<!-- ══════════════════ REVEAL ══════════════════ -->
+<div id="revealScreen" class="screen centered">
+  <div class="reveal-title" id="revealTitle">کارتەکەت دەرببە</div>
+  <div class="prog-dots" id="progDots"></div>
+
+  <div class="card-scene">
+    <div class="card-3d" id="card3d" onclick="flipCard()">
+      <div class="card-face card-front">
+        <div class="card-front-grid"></div>
+        <div class="card-front-shine"></div>
+        <div class="cf-icon">🃏</div>
+        <div class="cf-text">بدەی دەستت لێ</div>
+      </div>
+      <div class="card-face card-back" id="cardBack">
+        <div class="cb-player" id="cbPlayer"></div>
+        <div id="cbContent"></div>
+        <div id="cbRole" style="margin-top:0.4rem"></div>
+        <div id="cbCat" style="margin-top:0.25rem"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tap-hint" id="tapHint">👆 کارتەکە دەرببە</div>
+  <div class="ready-count" id="readyCount" style="display:none"></div>
+  <button class="btn-next hidden" id="nextBtn" onclick="markReady()">✅ ئامادەم ▸</button>
+</div>
+
+<!-- ══════════════════ VOTE ══════════════════ -->
+<div id="voteScreen" class="screen">
+  <div class="vote-title fade-up">🗳️ دەنگ بدە!</div>
+  <div class="vote-sub fade-up">کێ فێڵبازە؟ گفتوگۆ بکەن پاشان دەنگ بدەن</div>
+  <div class="vote-list fade-up" id="voteList"></div>
+  <div class="vote-status" id="voteStatus">هێشتا دەنگت نەداوە</div>
+  <button class="btn-reveal host-only" id="forceRevealBtn" onclick="forceReveal()" style="max-width:460px;width:100%">📢 ئەنجامەکان ئاشکرا بکە</button>
+</div>
+
+<!-- ══════════════════ RESULT ══════════════════ -->
+<div id="resultScreen" class="screen centered">
+  <div class="result-emoji" id="resEmoji">🎉</div>
+  <div class="result-title" id="resTitle"></div>
+  <div class="result-sub" id="resSub"></div>
+  <div class="reveal-cards glass fade-up" id="revealCards" style="padding:1.2rem;margin-top:0.3rem"></div>
+  <div class="result-btns fade-up">
+    <button class="btn-secondary" onclick="leaveRoom()">🏠 دەرچوون</button>
+    <button class="btn-newgame host-only" onclick="newGame()">🔄 یاری نوێ</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── Stars ───
+(function(){
+  const c=document.getElementById('stars');
+  for(let i=0;i<80;i++){
+    const s=document.createElement('div');
+    s.className='star';
+    const sz=Math.random()*2.5+0.5;
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${Math.random()*3+2}s;--delay:${Math.random()*4}s`;
+    c.appendChild(s);
+  }
+})();
+
+// ─── State ───
+const CATS = {
+  "🍽️ خواردن":true,"🏙️ شارەکان":true,"🌿 سروشت":true,
+  "🎭 کەلتوور":true,"⚽ وەرزش":true,"🐾 ئاژەڵ":true,
+  "🏛️ مێژوو":true,"🎬 فیلم و تیلیفزیۆن":true
+};
+const ALL_CATS=Object.keys(CATS);
+const AVATARS=["🔴","🟠","🟡","🟢","🔵","🟣","🟤","⚪","🌸","⭐"];
+const BG=['#3a1520','#1a2a3a','#2a2a0a','#1a3a1a','#1a1a3a','#2a1a3a','#2a1530','#1a1a2a','#2a1a15','#151530'];
+
+let me = { id: null, name: '', isHost: false, roomCode: '' };
+let roomState = null;
+let myAssignment = null;
+let myVote = null;
+let cardFlipped = false;
+let impostorCount = 1;
+let selectedCats = new Set(ALL_CATS);
+
+const socket = io();
+
+// ─── Socket events ───
+socket.on('room-joined', ({ code, playerId, isHost }) => {
+  me.id = playerId;
+  me.isHost = isHost;
+  me.roomCode = code;
+  document.getElementById('displayCode').textContent = code;
+  document.getElementById('myRoleBadge').className = isHost ? 'host-badge' : 'member-badge';
+  document.getElementById('myRoleBadge').textContent = isHost ? '👑 تۆ هۆستی' : '🎮 تۆ یاریزانی';
+  document.getElementById('hostSettings').style.display = isHost ? 'block' : 'none';
+  document.getElementById('startBtn').style.display = isHost ? '' : 'none';
+  document.getElementById('waitingMsg').style.display = isHost ? 'none' : 'flex';
+  document.querySelectorAll('.host-only').forEach(el => el.style.display = isHost ? '' : 'none');
+  if (isHost) renderCatGrid();
+  showScreen('lobbyScreen');
+});
+
+socket.on('room-update', (room) => {
+  roomState = room;
+  renderLobbyPlayers(room.players);
+  if (me.isHost) {
+    const maxImp = Math.max(1, Math.floor(room.players.length / 2));
+    if (impostorCount > maxImp) impostorCount = maxImp;
+    document.getElementById('impCount').textContent = toKurdNum(impostorCount);
+    document.getElementById('startBtn').disabled = room.players.length < 3;
+    // Sync selected cats
+    selectedCats = new Set(room.selectedCats);
+    renderCatGrid();
+  }
+  if (room.phase === 'vote') renderVoteScreen(room);
+});
+
+socket.on('your-assignment', (a) => {
+  myAssignment = a;
+});
+
+socket.on('phase-change', ({ phase }) => {
+  if (phase === 'reveal') showRevealScreen();
+  else if (phase === 'vote') showVoteScreen();
+  else if (phase === 'lobby') showScreen('lobbyScreen');
+});
+
+socket.on('ready-count', ({ count, total }) => {
+  document.getElementById('readyCount').style.display = 'block';
+  document.getElementById('readyCount').textContent = `✅ ئامادەبووان: ${toKurdNum(count)} / ${toKurdNum(total)}`;
+});
+
+socket.on('result', (data) => {
+  showResultScreen(data);
+});
+
+socket.on('player-left', ({ name }) => {
+  showToast(`${name} چووە دەرەوە`);
+});
+
+socket.on('error-msg', (msg) => {
+  showToast('❌ ' + msg);
+});
+
+// ─── Landing ───
+function toggleJoinForm() {
+  const s = document.getElementById('joinSection');
+  s.classList.toggle('open');
+  if (s.classList.contains('open')) document.getElementById('roomCodeInput').focus();
+}
+
+function getMyName() {
+  const v = document.getElementById('myNameInput').value.trim();
+  return v || 'میوان';
+}
+
+function createRoom() {
+  me.name = getMyName();
+  socket.emit('create-room', { playerName: me.name });
+}
+
+function joinRoom() {
+  const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+  if (code.length < 4) { showToast('❌ کۆدی ژووری دروست بنووسە!'); return; }
+  me.name = getMyName();
+  socket.emit('join-room', { code, playerName: me.name });
+}
+
+function copyRoomCode() {
+  const code = document.getElementById('displayCode').textContent;
+  if (!code || code === '—') return;
+  const url = `${location.origin}?room=${code}`;
+  navigator.clipboard?.writeText(url).then(() => showToast('📋 لینک کۆپی کرا!')).catch(() => {
+    navigator.clipboard?.writeText(code).then(() => showToast('📋 کۆد کۆپی کرا!'));
+  });
+}
+
+function leaveRoom() {
+  location.reload();
+}
+
+// ─── Lobby ───
+function renderLobbyPlayers(players) {
+  document.getElementById('lobbyPlayers').innerHTML = players.map((p, i) => `
+    <div class="lobby-player ${p.id === roomState?.hostId ? 'host-player' : ''}">
+      <div class="lp-avatar" style="background:${BG[i%BG.length]}">${p.avatar}</div>
+      <div class="lp-name">${p.name}</div>
+      ${p.id === roomState?.hostId ? '<span class="lp-host-tag">👑 هۆست</span>' : ''}
+      ${p.id === me.id ? '<span class="lp-you-tag">تۆ</span>' : ''}
+      <div class="waiting-dot" style="margin-right:auto;margin-left:0"></div>
+    </div>`).join('');
+}
+
+function renderCatGrid() {
+  document.getElementById('catGrid').innerHTML = ALL_CATS.map(cat => `
+    <div class="cat-btn ${selectedCats.has(cat)?'on':''}" onclick="toggleCat('${cat}')">
+      <span class="cat-check-mark">✓</span>
+      <span class="ce">${cat.split(' ')[0]}</span>
+      <span class="cn">${cat.split(' ').slice(1).join(' ')}</span>
+    </div>`).join('');
+}
+
+function toggleCat(cat) {
+  if (selectedCats.has(cat)) {
+    if (selectedCats.size <= 1) return;
+    selectedCats.delete(cat);
+  } else {
+    selectedCats.add(cat);
+  }
+  renderCatGrid();
+  syncSettings();
+}
+
+function changeImp(d) {
+  if (!roomState) return;
+  const max = Math.max(1, Math.floor(roomState.players.length / 2));
+  impostorCount = Math.max(1, Math.min(max, impostorCount + d));
+  document.getElementById('impCount').textContent = toKurdNum(impostorCount);
+  syncSettings();
+}
+
+function syncSettings() {
+  socket.emit('update-settings', {
+    code: me.roomCode,
+    impostorCount,
+    selectedCats: [...selectedCats],
+  });
+}
+
+function startGame() {
+  socket.emit('start-game', { code: me.roomCode });
+}
+
+// ─── Reveal ───
+function showRevealScreen() {
+  myVote = null;
+  cardFlipped = false;
+  showScreen('revealScreen');
+  renderRevealCard();
+}
+
+function renderRevealCard() {
+  if (!myAssignment) return;
+  const a = myAssignment;
+  cardFlipped = false;
+  document.getElementById('card3d').classList.remove('flipped');
+  document.getElementById('tapHint').classList.remove('hidden');
+  document.getElementById('nextBtn').classList.add('hidden');
+  document.getElementById('readyCount').style.display = 'none';
+
+  document.getElementById('cbPlayer').textContent = `${a.name} ${a.avatar}`;
+  const back = document.getElementById('cardBack');
+  if (a.isImpostor) {
+    back.className = 'card-face card-back imp';
+    document.getElementById('cbContent').innerHTML = `
+      <div class="cb-mystery">✦</div>
+      <div class="cb-imp-msg">تۆ فێڵبازی! 🔴</div>
+      <div class="cb-imp-hint">وشەت نییە — گوێ بگرە بزانی چی دەڵێن</div>`;
+    document.getElementById('cbRole').innerHTML = '<span class="role-badge rb-imp">🔴 فێڵباز</span>';
+    document.getElementById('cbCat').innerHTML = '';
+  } else {
+    back.className = 'card-face card-back';
+    document.getElementById('cbContent').innerHTML = `<div class="cb-word">${a.word}</div>`;
+    document.getElementById('cbRole').innerHTML = '<span class="role-badge rb-crew">🟢 ئاسایی</span>';
+    document.getElementById('cbCat').innerHTML = `<span class="cat-chip">${a.chosenCat}</span>`;
+  }
+
+  // Update reveal title
+  if (roomState) {
+    const total = roomState.players.length;
+    const myIdx = roomState.players.findIndex(p => p.id === me.id);
+    document.getElementById('revealTitle').textContent = `کارتەکەت دەرببە — ${a.name} ${a.avatar}`;
+    // Progress dots not applicable per-player in online mode - show generic
+    document.getElementById('progDots').innerHTML = '';
+  }
+}
+
+function flipCard() {
+  if (cardFlipped) return;
+  cardFlipped = true;
+  document.getElementById('card3d').classList.add('flipped');
+  document.getElementById('tapHint').classList.add('hidden');
+  setTimeout(() => {
+    const btn = document.getElementById('nextBtn');
+    btn.classList.remove('hidden');
+    btn.textContent = '✅ کارتم بینی، ئامادەم';
+  }, 700);
+}
+
+function markReady() {
+  document.getElementById('nextBtn').disabled = true;
+  document.getElementById('nextBtn').textContent = '⏳ چاوەڕوانی دیکەکان...';
+  socket.emit('player-ready-vote', { code: me.roomCode });
+}
+
+// ─── Vote ───
+function showVoteScreen() {
+  showScreen('voteScreen');
+  if (roomState) renderVoteScreen(roomState);
+}
+
+function renderVoteScreen(room) {
+  if (getCurrentScreen() !== 'voteScreen') return;
+  const voteArr = Object.values(room.votes || {});
+  const voteCounts = {};
+  voteArr.forEach(tid => { voteCounts[tid] = (voteCounts[tid]||0)+1; });
+
+  document.getElementById('voteList').innerHTML = room.players.map((p,i) => {
+    const count = voteCounts[p.id] || 0;
+    const isMine = myVote === p.id;
+    const canVote = !myVote && p.id !== me.id;
+    return `
+      <div class="vote-card ${isMine?'my-vote':''} ${(!canVote&&!isMine)?'cannot-vote':''}" onclick="${canVote?`castVote('${p.id}')`:''}" id="vc-${p.id}">
+        <div class="vc-left">
+          <div class="vc-avatar" style="background:${BG[i%BG.length]}">${p.avatar}</div>
+          <div>
+            <div class="vc-name">${p.name} ${p.id===me.id?'<span class="vc-you">تۆ</span>':''}</div>
+          </div>
+        </div>
+        <div class="vote-count-badge ${count>0?'has-votes':''}" id="vcount-${p.id}">${toKurdNum(count)} دەنگ</div>
+      </div>`;
+  }).join('');
+
+  const totalVotes = Object.keys(room.votes||{}).length;
+  const total = room.players.length;
+  document.getElementById('voteStatus').textContent = myVote
+    ? `✅ دەنگت دایەوە (${toKurdNum(totalVotes)}/${toKurdNum(total)} دەنگ داوەتەوە)`
+    : `${toKurdNum(totalVotes)} / ${toKurdNum(total)} دەنگیان داوەتەوە`;
+  document.getElementById('voteStatus').className = myVote ? 'vote-status voted' : 'vote-status';
+}
+
+function castVote(targetId) {
+  if (myVote) return;
+  myVote = targetId;
+  socket.emit('cast-vote', { code: me.roomCode, targetId });
+}
+
+function forceReveal() {
+  socket.emit('force-reveal', { code: me.roomCode });
+}
+
+// ─── Result ───
+function showResultScreen(data) {
+  showScreen('resultScreen');
+  document.getElementById('resEmoji').textContent = data.isCorrect ? '🎉' : '😈';
+  document.getElementById('resTitle').textContent = data.isCorrect
+    ? 'دەستخۆش! فێڵبازەکەتان دۆزییەوە!'
+    : 'فێڵبازەکان بردیان! ئێوە فریوخوارن!';
+  document.getElementById('resSub').textContent = data.isCorrect
+    ? `${data.impostors.map(a=>a.name).join(' و ')} فێڵباز بوون`
+    : `فێڵبازەکان: ${data.impostors.map(a=>a.name).join(' و ')}`;
+
+  const voteCounts = data.voteCounts || {};
+  document.getElementById('revealCards').innerHTML = data.assignments.map((a,i) => `
+    <div class="reveal-card ${a.isImpostor?'imp-card':''}">
+      <div class="rc-left">
+        <div style="font-size:1.2rem">${a.avatar}</div>
+        <div>
+          <div style="font-weight:600;font-size:0.92rem">${a.name} ${a.id===me.id?'(تۆ)':''}</div>
+          <div class="rc-word">وشە: <span>${a.word}</span></div>
+          <div class="rc-votes">${toKurdNum(voteCounts[a.id]||0)} دەنگ</div>
+        </div>
+      </div>
+      <div style="font-size:0.8rem;color:${a.isImpostor?'var(--accent)':'var(--green)'}">${a.isImpostor?'🔴 فێڵباز':'🟢 ئاسایی'}</div>
+    </div>`).join('');
+
+  if (data.isCorrect) launchConfetti();
+}
+
+function newGame() {
+  socket.emit('new-game', { code: me.roomCode });
+}
+
+// ─── UI helpers ───
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function getCurrentScreen() {
+  const s = document.querySelector('.screen.active');
+  return s ? s.id : null;
+}
+
+function toKurdNum(n) {
+  const d=['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+  return String(n).split('').map(c=>d[+c]??c).join('');
+}
+
+function showToast(msg, duration=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), duration);
+}
+
+// ─── Confetti ───
+function launchConfetti() {
+  const canvas = document.getElementById('confetti');
+  const ctx = canvas.getContext('2d');
+  canvas.width = innerWidth; canvas.height = innerHeight;
+  const colors = ['#ff4d6d','#ffc93c','#4fc3f7','#43e97b','#a855f7','#ff9f1c'];
+  const p = Array.from({length:140}, ()=>({
+    x:Math.random()*canvas.width, y:Math.random()*-canvas.height,
+    r:Math.random()*7+3, color:colors[Math.floor(Math.random()*colors.length)],
+    vx:(Math.random()-.5)*4, vy:Math.random()*4+2,
+    rot:Math.random()*360, vrot:(Math.random()-.5)*7, w:Math.random()*.5+.5
+  }));
+  let f=0;
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    p.forEach(q=>{
+      q.x+=q.vx;q.y+=q.vy;q.rot+=q.vrot;
+      ctx.save();ctx.translate(q.x,q.y);ctx.rotate(q.rot*Math.PI/180);
+      ctx.fillStyle=q.color;ctx.beginPath();
+      ctx.ellipse(0,0,q.r,q.r*q.w,0,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+    });
+    f++;if(f<200)requestAnimationFrame(draw);else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  draw();
+}
+
+// ─── Auto join from URL ───
+(function(){
+  const params = new URLSearchParams(location.search);
+  const room = params.get('room');
+  if (room) {
+    document.getElementById('roomCodeInput').value = room.toUpperCase();
+    const js = document.getElementById('joinSection');
+    js.classList.add('open');
+    showToast(`🔗 کۆدی ژوور ${room} دۆزرایەوە`);
+  }
+})();
+</script>
+</body>
+</html>
